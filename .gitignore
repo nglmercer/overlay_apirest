@@ -4,3 +4,4 @@ build/
 bun.lockb
 package-lock.json
 server.lock
+app/assets/

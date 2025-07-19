@@ -3,7 +3,6 @@ let viteHost: string | null = null;
     const viteHostArg = process.argv.find((arg) => arg.startsWith('--vitehost'));
     viteHost = viteHostArg?.split('=')[1]!;
 }
-
 import {create, events, registerMethodMap} from 'buntralino';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
@@ -12,44 +11,10 @@ import media from './routes/media.ts';
 import QRrouter from './routes/qr.ts';
 import path from 'path';
 import { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, localIP,CONFIG_FILE } from './server/config.ts'
-import { existsSync, writeFileSync } from "fs";
-import selfsigned from 'selfsigned'; // Necesitamos el export por defecto
 //@ts-ignore
 import CERT_FILE from '../../cert.pem' with { type: 'text' };
 //@ts-ignore
 import KEY_FILE from '../../key.pem' with { type: 'text' };
-
-// 1. Verificar si los certificados existen. Si no, los creamos.
-if (!existsSync(CERT_FILE) || !existsSync(KEY_FILE)) {
-  console.log("⏳ Certificados no encontrados. Creando nuevos...");
-
-  // 2. Definir los atributos para el certificado
-  // Puedes personalizarlos según tus necesidades. 'localhost' es común para desarrollo.
-  const attrs = [{ name: "commonName", value: "localhost" }];
-  
-  // 3. Opciones de generación (ej. duración de 1 año)
-  const options = {
-    days: 365, // Válido por 365 días
-    algorithm: "sha256",
-    keySize: 2048,
-  };
-
-  // 4. Generar los PEM (Privacy-Enhanced Mail)
-  const pems = selfsigned.generate(attrs, options);
-
-  // 5. Escribir los archivos en el disco
-  // pems.private contiene la clave privada
-  // pems.cert contiene el certificado público
-  try {
-    writeFileSync(KEY_FILE, pems.private);
-    writeFileSync(CERT_FILE, pems.cert);
-    console.log("✅ ¡Certificados creados con éxito!");
-  } catch (err) {
-    console.error("❌ Error al escribir los archivos del certificado:", err);
-  }
-} else {
-  console.log("✅ Certificados encontrados. No se requiere ninguna acción.");
-}
 
 const app = new Hono({});
 app.use('*', cors({
