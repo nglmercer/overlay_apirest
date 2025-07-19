@@ -11,14 +11,44 @@ import tasks from './routes/tasks.ts';
 import media from './routes/media.ts';
 import QRrouter from './routes/qr.ts';
 import path from 'path';
-import { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, findAvailablePort, localIP,CONFIG_FILE } from './server/config.ts'
-import { existsSync } from "fs";
-const CERT_FILE = "cert.pem";
-const KEY_FILE  = "key.pem";
+import { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, localIP,CONFIG_FILE } from './server/config.ts'
+import { existsSync, writeFileSync } from "fs";
+import selfsigned from 'selfsigned'; // Necesitamos el export por defecto
+//@ts-ignore
+import CERT_FILE from '../../cert.pem' with { type: 'text' };
+//@ts-ignore
+import KEY_FILE from '../../key.pem' with { type: 'text' };
 
-// 1. Verificar / crear certificados
+// 1. Verificar si los certificados existen. Si no, los creamos.
 if (!existsSync(CERT_FILE) || !existsSync(KEY_FILE)) {
-  console.log("⏳ Certificados no encontrados");
+  console.log("⏳ Certificados no encontrados. Creando nuevos...");
+
+  // 2. Definir los atributos para el certificado
+  // Puedes personalizarlos según tus necesidades. 'localhost' es común para desarrollo.
+  const attrs = [{ name: "commonName", value: "localhost" }];
+  
+  // 3. Opciones de generación (ej. duración de 1 año)
+  const options = {
+    days: 365, // Válido por 365 días
+    algorithm: "sha256",
+    keySize: 2048,
+  };
+
+  // 4. Generar los PEM (Privacy-Enhanced Mail)
+  const pems = selfsigned.generate(attrs, options);
+
+  // 5. Escribir los archivos en el disco
+  // pems.private contiene la clave privada
+  // pems.cert contiene el certificado público
+  try {
+    writeFileSync(KEY_FILE, pems.private);
+    writeFileSync(CERT_FILE, pems.cert);
+    console.log("✅ ¡Certificados creados con éxito!");
+  } catch (err) {
+    console.error("❌ Error al escribir los archivos del certificado:", err);
+  }
+} else {
+  console.log("✅ Certificados encontrados. No se requiere ninguna acción.");
 }
 
 const app = new Hono({});
@@ -111,22 +141,10 @@ app.all('*', async (c, next) => {
 app.route('/tasks', tasks);
 app.route('/', media);
 app.route('/', QRrouter);
-
-await create(viteHost ?? '/', {
-    // Name windows to easily manipulate them and distinguish them in events
-    name: 'main',
-    // We need this option to add Neutralino globals to the Vite-hosted page
-    injectGlobals: true,
-    // Any options for Neutralino.window.create can go here
-});
-
-// Exit the app completely when the main window is closed without the `shutdown` command.
-events.on('close', (windowName: string) => {
-    if (windowName === 'main') {
-        // eslint-disable-next-line no-process-exit
-        process.exit();
-    }
-});
+console.log({
+  KEY_FILE,
+  CERT_FILE,
+})
 
 // 3. Ahora puedes acceder a la información del servidor desde el objeto 'server'
 async function startServer() {
@@ -173,17 +191,16 @@ async function startServer() {
         fetch: app.fetch,
         port: serverPort,
         hostname: config.hostname || '0.0.0.0',
-        key:  Bun.file(KEY_FILE),
-        cert: Bun.file(CERT_FILE),
+        key:  KEY_FILE,
+        cert: CERT_FILE,
       });
     } catch (error) {
       console.log(`⚠️  Puerto ${serverPort} ocupado, buscando puerto disponible...`);
       
       // Si falla, buscar un puerto disponible
-      serverPort = await findAvailablePort(serverPort);
       server = Bun.serve({
         fetch: app.fetch,
-        port: serverPort,
+        port: serverPort++,
         hostname: config.hostname || '0.0.0.0',
       });
 
@@ -231,7 +248,7 @@ const functionMap = {
             host: 'localhost',
             port: server.port,
             url: server.url,
-            protocol: KEY_FILE ? 'https' : 'http',
+            protocol: CERT_FILE ? 'https' : 'http',
         }
     }
 };

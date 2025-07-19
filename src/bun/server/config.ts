@@ -97,25 +97,7 @@ async function cleanupLock(): Promise<void> {
     // Ignorar errores si el archivo no existe
   }
 }
-// Función para encontrar un puerto disponible
-async function findAvailablePort(startPort: number): Promise<number> {
-  for (let port = startPort; port < startPort + 100; port++) {
-    try {
-      // Intentar crear un servidor temporal para probar el puerto
-      const testServer = Bun.serve({
-        fetch: () => new Response('test'),
-        port,
-        hostname: 'localhost',
-      });
-      testServer.stop();
-      return port;
-    } catch {
-      // Puerto ocupado, intentar el siguiente
-      continue;
-    }
-  }
-  throw new Error(`No se pudo encontrar un puerto disponible a partir del ${startPort}`);
-}
+
 function getLocalIP(): string | null {
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
@@ -128,5 +110,5 @@ function getLocalIP(): string | null {
   return null;
 }
 const localIP = getLocalIP();
-export { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, findAvailablePort, localIP,CONFIG_FILE };
+export { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, localIP,CONFIG_FILE };
 export default configApi;
