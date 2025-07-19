@@ -1,12 +1,24 @@
 // src/config/apiConfig.ts
 
 // 1. Define una interfaz clara para la configuración
+// types.ts - Tipos para la configuración de proxy
+interface ProxyConfig {
+  enabled: boolean;
+  url: string;
+  auth?: {
+    username: string;
+    password: string;
+  };
+  timeout?: number;
+}
+
 interface ApiConfig {
   host: string;
   port: number | string;
   protocol: 'http' | 'https';
   getFullUrl: () => string;
   update: (newConfig: Partial<Omit<ApiConfig, 'getFullUrl' | 'update'>>) => void;
+  proxy?: ProxyConfig;
 }
 /*
 const windowurl: string = typeof window !== "undefined" ? window.location.origin : "";
@@ -39,4 +51,4 @@ const apiConfig: ApiConfig = {
 };
 
 export default apiConfig;
-export type{ ApiConfig};
+export type{ ApiConfig, ProxyConfig};
