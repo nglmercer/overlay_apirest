@@ -3,8 +3,13 @@ neutralino.init();
 import * as buntralino from 'buntralino-client';
 import {taskApi} from './utils/Taskapi';
 import apiConfig,{type ApiConfig} from './utils/config/apiConfig';
-// Sample Bun interaction
-(async () => {
+
+if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ready);
+} else {
+    ready();
+}
+async function ready(){
     await buntralino.ready;
     const TIMEOUT = {};
     const response = await Promise.race([
@@ -19,8 +24,10 @@ import apiConfig,{type ApiConfig} from './utils/config/apiConfig';
     }
     const resultApi = await taskApi.getAll('overlay');
     console.log("resultApi", resultApi);
-})();
-
-(window as any).openDocs = () => neutralino.os.open('https://buntralino.ghpages.io/');
-(window as any).openNeutralinoDocs = () => neutralino.os.open('https://neutralino.js.org/docs/api/overview');
-(window as any).openViteDocs = () => neutralino.os.open('https://vite.dev/guide/');
+    const image = document.getElementById('BuntralinoQR') as HTMLImageElement;
+    image.src = apiConfig.getFullUrl()+ '/qr';
+}
+/*
+ neutralino.os.open('URL_ADDRESS');
+ (window as any).callback() => {}
+*/

@@ -1,0 +1,1 @@
+html,body{position:relative;height:100%;padding:0;margin:0}body{background-color:#18181c;color:#fff;display:flex;flex-flow:column nowrap;align-items:center;justify-content:space-around;font-family:sans-serif}.logo{max-width:max(100%,50dvw);height:min(100%,50dvh);width:auto;animation:glow infinite 3s ease-in-out;filter:drop-shadow(0 .5rem 1rem #dbe4a622)}

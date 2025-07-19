@@ -29,7 +29,7 @@ const windowurl: string = typeof window !== "undefined" ? window.location.origin
 const apiConfig: ApiConfig = {
   // Lee de variables de entorno si están disponibles, si no, usa valores por defecto
   host: import.meta.env.VITE_API_HOST || 'localhost',
-  port: import.meta.env.VITE_API_PORT || 3000,
+  port: import.meta.env.VITE_API_PORT || 3001,
   protocol: 'http' ,
 
   /**

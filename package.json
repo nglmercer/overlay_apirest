@@ -17,7 +17,8 @@
     "buntralino-client": "^1.0.7",
     "execa": "^9.5.2",
     "hono": "^4.8.5",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "selfsigned": "^2.4.1"
   },
   "devDependencies": {
     "@neutralinojs/neu": "^11.3.0",

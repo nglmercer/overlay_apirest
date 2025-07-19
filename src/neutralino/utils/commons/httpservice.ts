@@ -12,7 +12,7 @@ type FetchOptions = Omit<RequestInit, 'headers'> & {
 type RequestBody = Record<string, any> | FormData;
 proxyConfig.update({
   enabled: true,
-  url: 'http://localhost:3000'  // ✅ URL completa sin barra final
+  url: 'http://localhost:3001'  // ✅ URL completa sin barra final
 })
 /**
  * Maneja la respuesta de la API

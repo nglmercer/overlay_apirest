@@ -17,7 +17,7 @@ function getLocalIP(): string {
 
 app.get('/qr', async (c) => {
   const { text } = c.req.query();
-  const port = c.req.header('host')?.split(':')?.[1] ?? '3000';
+  const port = c.req.header('host')?.split(':')?.[1] ?? '3001';
   const defaultURL = `http://${getLocalIP()}:${port}/qr`;
   const toEncode = text || defaultURL;
 

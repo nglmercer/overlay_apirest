@@ -12,6 +12,14 @@ import media from './routes/media.ts';
 import QRrouter from './routes/qr.ts';
 import path from 'path';
 import { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, findAvailablePort, localIP,CONFIG_FILE } from './server/config.ts'
+import { existsSync } from "fs";
+const CERT_FILE = "cert.pem";
+const KEY_FILE  = "key.pem";
+
+// 1. Verificar / crear certificados
+if (!existsSync(CERT_FILE) || !existsSync(KEY_FILE)) {
+  console.log("⏳ Certificados no encontrados");
+}
 
 const app = new Hono({});
 app.use('*', cors({
@@ -19,7 +27,6 @@ app.use('*', cors({
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Proxy-Target', 'Proxy-Authorization'],
 }));
-// Ruta proxy genérica
 app.all('*', async (c, next) => {
   const targetUrl = c.req.header('X-Proxy-Target');
 
@@ -103,7 +110,7 @@ app.all('*', async (c, next) => {
 // Monta las rutas
 app.route('/tasks', tasks);
 app.route('/', media);
-app.route('/', QRrouter); // → http://localhost:3000/qr
+app.route('/', QRrouter);
 
 await create(viteHost ?? '/', {
     // Name windows to easily manipulate them and distinguish them in events
@@ -166,6 +173,8 @@ async function startServer() {
         fetch: app.fetch,
         port: serverPort,
         hostname: config.hostname || '0.0.0.0',
+        key:  Bun.file(KEY_FILE),
+        cert: Bun.file(CERT_FILE),
       });
     } catch (error) {
       console.log(`⚠️  Puerto ${serverPort} ocupado, buscando puerto disponible...`);
@@ -204,12 +213,14 @@ async function startServer() {
 }
 
 // Iniciar servidor
-//const server = await startServer(); //production server
-const server = Bun.serve({
+const server = await startServer(); //production server
+/* const server = Bun.serve({
         fetch: app.fetch,
-        port: '3000',
+        port: '3001',
         hostname:'0.0.0.0',
-      }); //development server
+        key:  Bun.file(KEY_FILE),
+        cert: Bun.file(CERT_FILE),
+      }); //development server */
 const functionMap = {
     getURL: async (payload: {
         message?: string
@@ -217,8 +228,10 @@ const functionMap = {
         //await Bun.sleep(1000);
         return {
             payload,
-            host: localIP,
-            port: server.port
+            host: 'localhost',
+            port: server.port,
+            url: server.url,
+            protocol: KEY_FILE ? 'https' : 'http',
         }
     }
 };

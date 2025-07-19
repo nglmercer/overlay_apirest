@@ -37,7 +37,7 @@ configApi.get('/config', async (c) => {
 });
 // Configuración por defecto
 const DEFAULT_CONFIG: ServerConfig = {
-  port: 3000,
+  port: 3001,
   hostname: '0.0.0.0'
 };
 // Función para cargar configuración desde archivo

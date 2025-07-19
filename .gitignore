@@ -1,2 +1,6 @@
 node_modules/
 bin/
+build/
+bun.lockb
+package-lock.json
+server.lock
