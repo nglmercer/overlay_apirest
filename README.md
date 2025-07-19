@@ -1,4 +1,3 @@
-```markdown
 # 📘 API Rest – Documentación Oficial
 
 > Servidor monolítico basado en **Bun + Hono** que expone endpoints para:
@@ -167,4 +166,3 @@ interface Task {
 ## 📜 Licencia
 
 No especificada – uso interno.
-```
