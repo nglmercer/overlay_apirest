@@ -25,11 +25,16 @@ class TasksApi extends BaseApi {
 
   // ------------- CRUD -------------
   async getAll(type: TaskType): Promise<Task[]> {
-    return this.request(
+    const endpoint = `/tasks/get/${type}`
+    return this.getWithProxy(endpoint, {
+      enabled: true,
+      url: '',
+    })
+/*     return this.request(
       this.http.get<Task[]>(`${this.host}/tasks/get/${type}`, {
         headers: this._authHeaders()
       })
-    );
+    ); */
   }
 
   async getById(type: TaskType, taskId: string): Promise<Task> {

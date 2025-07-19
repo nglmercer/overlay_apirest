@@ -10,7 +10,10 @@ type FetchOptions = Omit<RequestInit, 'headers'> & {
 };
 
 type RequestBody = Record<string, any> | FormData;
-
+proxyConfig.update({
+  enabled: true,
+  url: 'http://localhost:3000'  // ✅ URL completa sin barra final
+})
 /**
  * Maneja la respuesta de la API
  */
@@ -100,16 +103,14 @@ function buildProxyRequest(url: string, options: RequestInit): [string, RequestI
   
   // En entornos del navegador, usamos el proxy como prefijo de URL
   // En Node.js, esto se manejaría diferente con agentes HTTP
-  const finalUrl = typeof window !== 'undefined' 
-    ? `${proxyUrl}/${encodeURIComponent(url)}`
-    : url;
-
+  const finalUrl = proxyUrl;
+  console.log("url",url)
   const finalOptions: RequestInit = {
     ...options,
     headers: {
       ...normalizedHeaders,
       ...proxyAuthHeaders,
-      'X-Proxy-Target': url, // Header personalizado para el proxy
+      'X-Proxy-Target': `${encodeURIComponent(url)}`, // Header personalizado para el proxy
     },
     // Agregar timeout si está configurado
     signal: AbortSignal.timeout(proxyConfig.getTimeout())
