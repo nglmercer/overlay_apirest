@@ -1,4 +1,3 @@
-```markdown
 # 📘 API Rest – Documentación Oficial
 
 > Servidor monolítico basado en **Bun + Hono** que expone endpoints para:
@@ -64,8 +63,13 @@ Sirve archivos del sistema de archivos relativo al directorio de trabajo.
 
 ### 3️⃣ QR (`/qr`)
 
-> El archivo importa `QRrouter`, por lo tanto los endpoints exactos dependen del código en `./routes/qr.ts`.  
-> Documentación pendiente – placeholder.
+> Genera el qr para la conexion o generar enlaces
+```
+// url local
+GET /qr
+// genera un qr con cualquier texto
+GET /qr?text=URL_O_TEXTO
+```
 
 ---
 
@@ -167,4 +171,3 @@ interface Task {
 ## 📜 Licencia
 
 No especificada – uso interno.
-```
