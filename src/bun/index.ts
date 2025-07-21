@@ -10,98 +10,32 @@ import tasks from './routes/tasks.ts';
 import media from './routes/media.ts';
 import QRrouter from './routes/qr.ts';
 import path from 'path';
+import { ProxyManager } from './proxy/ProxyManager.ts';
 import { loadConfig, saveConfig, checkServerLock, createServerLock, cleanupLock, localIP,CONFIG_FILE } from './server/config.ts'
 //@ts-ignore
-import CERT_FILE from '../../cert.pem' with { type: 'text' };
+import CERT_FILE from '../../localhost+3.pem' with { type: 'text' };
 //@ts-ignore
-import KEY_FILE from '../../key.pem' with { type: 'text' };
-
+import KEY_FILE from '../../localhost+3-key.pem' with { type: 'text' };
+const proxyManager = new ProxyManager({
+  http: {
+    timeout: 30000,
+    allowOrigins: ['*'],
+    maxRedirects: 5
+  },
+  websocket: {
+    timeout: 30000,
+    maxConnections: 1000,
+    heartbeatInterval: 30000
+  },
+  enableStats: true
+});
 const app = new Hono({});
 app.use('*', cors({
   origin: '*', // Cambia esto en producción
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization', 'X-Proxy-Target', 'Proxy-Authorization'],
 }));
-app.all('*', async (c, next) => {
-  const targetUrl = c.req.header('X-Proxy-Target');
-
-  // Si el header existe, actúa como proxy
-  if (targetUrl) {
-    // --- INICIO DE TU LÓGICA DE PROXY (SIN CAMBIOS) ---
-
-    // Parsear URL objetivo (Mejora: Usar new URL para validar)
-    let parsedUrl: URL | any;
-    try {
-      // Es más seguro y robusto parsear directamente a un objeto URL
-      parsedUrl = new URL(decodeURIComponent(targetUrl));
-    } catch {
-      return c.text('Invalid X-Proxy-Target URL format', 400);
-    }
-
-    // Copiar headers
-    const headers = new Headers();
-    // c.req.header() devuelve un objeto, es mejor iterar sobre c.req.raw.headers
-    for (const [key, value] of c.req.raw.headers) {
-      if (key.toLowerCase() === 'host') continue; // Evita el header host del proxy
-      headers.set(key, value);
-    }
-
-    // Autenticación proxy básica
-    const authHeader = c.req.header('Proxy-Authorization');
-    if (authHeader?.startsWith('Basic ')) {
-      headers.set('Authorization', authHeader); // Reenviar al destino si es necesario
-    }
-
-    // Copiar body si existe
-    let body: any | null = null;
-    if (!['GET', 'HEAD'].includes(c.req.method)) {
-      // El body de la petición original ya es un stream, podemos pasarlo directamente
-      // Esto es más eficiente que leerlo todo en memoria (text, formData, arrayBuffer)
-      body = c.req.raw.body;
-    }
-
-    // Timeout configurado
-    const timeout = Number(c.req.header('X-Proxy-Timeout')) || 30000;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-    try {
-      const res = await fetch(parsedUrl.toString(), {
-        method: c.req.method,
-        headers,
-        body,
-        signal: controller.signal,
-        // Hono usa Cloudflare Workers, que no soporta redirect: 'manual' por defecto.
-        // Si corres en otro entorno como Node.js, podrías añadirlo.
-        // redirect: 'manual' 
-      });
-
-      clearTimeout(timeoutId);
-
-      // Copiar respuesta
-      const responseHeaders = new Headers(res.headers);
-      responseHeaders.set('Access-Control-Allow-Origin', '*'); // Permite CORS
-      responseHeaders.set('Access-Control-Allow-Headers', '*');
-
-      return new Response(res.body, {
-        status: res.status,
-        statusText: res.statusText,
-        headers: responseHeaders,
-      });
-    } catch (error) {
-      clearTimeout(timeoutId);
-      // Diferenciar entre un timeout y otros errores de red
-      if ((error as Error).name === 'AbortError') {
-        return c.text('Proxy error: Target timed out', 504); // Gateway Timeout
-      }
-      return c.text(`Proxy error: ${(error as Error).message}`, 502); // Bad Gateway
-    }
-    // --- FIN DE TU LÓGICA DE PROXY ---
-  }
-
-  // Si el header NO existe, pasa al siguiente manejador (otras rutas API)
-  await next();
-});
+app.use('*', proxyManager.middleware);
 // Monta las rutas
 app.route('/tasks', tasks);
 app.route('/', media);
